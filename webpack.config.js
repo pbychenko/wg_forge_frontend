@@ -13,6 +13,9 @@ module.exports = {
       template: "./src/index.html"
     })
   ],
+  resolve: {
+    extensions: ['.js', '.jsx'],
+  },
   devServer: {
     contentBase: path.join(__dirname, "dist"),
     open: true,
@@ -20,5 +23,27 @@ module.exports = {
     before: function(app, server) {
       app.use("/api", express.static(path.join(__dirname, "data")));
     }
-  }
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/, 
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+        },
+      },
+      {
+        test: /\.jsx$/, 
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+        },
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
+      },
+    ],
+  },
 };
