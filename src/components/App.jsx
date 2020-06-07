@@ -4,13 +4,16 @@ import orders from '../../data/orders.json';
 
 
 const getOrderDate = (date) => {
-  const newDate = new Date(+date);
-  // const day = newDate.getDay();
-  // const month = newDate.getMonth();
-  // const year =  newDate.getYear()
-  return newDate.toISOString();
-  // return day + ' ' + month + ' ' + year;
-  // return 1;
+  const formatNumber = (number) => number < 10 ? '0' + number : number;
+  const newDate = new Date(date);
+  const day = formatNumber(newDate.getDate());
+  const month = formatNumber(newDate.getMonth() + 1);
+  const year =  formatNumber(newDate.getYear());
+  const hours = formatNumber(newDate.getHours());
+  const minutes = formatNumber(newDate.getMinutes());
+  const seconds = formatNumber(newDate.getSeconds());
+
+  return `${day}/${month}/${year} ${hours}/${minutes}/${seconds}`;
 }
 
 const formatCardNumber = (cardNumber) => {
@@ -23,7 +26,7 @@ export default class App extends React.Component {
       <tr key={order.id} id={order.id}>
         <td>{order.transaction_id}</td>
         <td className="user_data">{order.id}</td>
-        <td>{getOrderDate(order.created_at)}</td>
+        <td>{getOrderDate(+order.created_at)}</td>
         <td>${order.total}</td>
         <td>{formatCardNumber(order.card_number)}</td>
         <td>{order.card_type}</td>
