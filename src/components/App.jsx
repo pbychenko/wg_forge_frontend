@@ -1,6 +1,7 @@
 import React from 'react';
 import { Table } from 'react-bootstrap';
 import orders from '../../data/orders.json';
+import users from '../../data/users.json';
 
 
 const getOrderDate = (date) => {
@@ -20,12 +21,21 @@ const formatCardNumber = (cardNumber) => {
   return cardNumber.slice(0, 2) + '********' + cardNumber.slice(-4);
 }
 
+const getUserName = (id) => {
+  const user = users.filter(user => user.id === id)[0];
+  const genderPrefix = user.gender === 'Male' ? 'Mr.': 'Ms.';
+
+  return `${genderPrefix} ${user.first_name} ${user.last_name}`;
+}
+
 export default class App extends React.Component {
   renderRow = (order) => {
     return (
       <tr key={order.id} id={order.id}>
         <td>{order.transaction_id}</td>
-        <td className="user_data">{order.id}</td>
+        <td className="user_data">
+          <a href="#">{getUserName(order.user_id)}</a>
+        </td>
         <td>{getOrderDate(+order.created_at)}</td>
         <td>${order.total}</td>
         <td>{formatCardNumber(order.card_number)}</td>
