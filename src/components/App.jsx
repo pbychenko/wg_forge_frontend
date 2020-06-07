@@ -2,6 +2,7 @@ import React from 'react';
 import { Table } from 'react-bootstrap';
 import orders from '../../data/orders.json';
 import users from '../../data/users.json';
+import UserDetailsModal from './UserDetailsModal.jsx';
 
 
 const getOrderDate = (date) => {
@@ -29,12 +30,31 @@ const getUserName = (id) => {
 }
 
 export default class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      // items: [],
+      // activeUserData: null,
+      // requestState: '',
+      showUserDetails: false,
+      // showErrorBlock: false,
+      // form: {
+      //   name: '',
+      //   comment: '',
+      // },
+    };
+  } 
+
   renderRow = (order) => {
+    const userData = users.filter(user => user.id === order.user_id)[0];
+    // const userData = this.state.activePictureData;
+
     return (
       <tr key={order.id} id={order.id}>
         <td>{order.transaction_id}</td>
         <td className="user_data">
-          <a href="#">{getUserName(order.user_id)}</a>
+          <a href="#" onClick={this.handleUserDetailsClick(order.user_id)}>{getUserName(order.user_id)}</a>
+          <UserDetailsModal show={this.state.showUserDetails} data={userData} />
         </td>
         <td>{getOrderDate(+order.created_at)}</td>
         <td>${order.total}</td>
@@ -45,9 +65,18 @@ export default class App extends React.Component {
     );    
   }
 
+  handleUserDetailsClick = (id) => (e) => {
+    // const user = users.filter(user => user.id === id)[0];
+    // console.log(user);
+    e.preventDefault();
+    const {showUshowUserDetails} = this.state;
+    console.log(showUshowUserDetails);
+    this.setState({ showUshowUserDetails: !showUshowUserDetails});
+  }
+
   renderData = () => {
     return orders.map(order => this.renderRow(order));
-  }
+  }  
 
   render() {
     return (
