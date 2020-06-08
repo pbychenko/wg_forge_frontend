@@ -49,11 +49,12 @@ export default class App extends React.Component {
   renderRow = (order) => {
     const userData = users.filter(user => user.id === order.user_id)[0];
     const company = companies.filter(company => company.id === userData.company_id)[0];
-    console.log()
-    // userData['company_url'] = company.url;
-    userData['company_title'] = company.title;
-    userData['company_industry'] = company.industry;
-    // const userData = this.state.activePictureData;
+    if (company) {
+      userData['company_url'] = company.url;
+      userData['company_title'] = company.title;
+      userData['company_sector'] = company.sector;
+      userData['company_industry'] = company.industry;
+    }
 
     return (
       <tr key={order.id} id={order.id}>
