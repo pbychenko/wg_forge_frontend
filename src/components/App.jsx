@@ -2,6 +2,7 @@ import React from 'react';
 import { Table } from 'react-bootstrap';
 import orders from '../../data/orders.json';
 import users from '../../data/users.json';
+import companies from '../../data/companies.json';
 import UserDetailsModal from './UserDetailsModal.jsx';
 
 
@@ -36,7 +37,7 @@ export default class App extends React.Component {
       // items: [],
       // activeUserData: null,
       // requestState: '',
-      showUserDetails: false,
+      activeUserDetails: {},
       // showErrorBlock: false,
       // form: {
       //   name: '',
@@ -47,14 +48,19 @@ export default class App extends React.Component {
 
   renderRow = (order) => {
     const userData = users.filter(user => user.id === order.user_id)[0];
+    const company = companies.filter(company => company.id === userData.company_id)[0];
+    console.log()
+    // userData['company_url'] = company.url;
+    userData['company_title'] = company.title;
+    userData['company_industry'] = company.industry;
     // const userData = this.state.activePictureData;
 
     return (
       <tr key={order.id} id={order.id}>
         <td>{order.transaction_id}</td>
         <td className="user_data">
-          <a href="#" onClick={this.handleUserDetailsClick(order.user_id)}>{getUserName(order.user_id)}</a>
-          <UserDetailsModal show={this.state.showUserDetails} data={userData} />
+          <a href="#" onClick={this.handleUserDetailsClick(order.id)}>{getUserName(order.user_id)}</a>
+          <UserDetailsModal show={this.state.activeUserDetails[order.id]} data={userData} />
         </td>
         <td>{getOrderDate(+order.created_at)}</td>
         <td>${order.total}</td>
@@ -69,9 +75,14 @@ export default class App extends React.Component {
     // const user = users.filter(user => user.id === id)[0];
     // console.log(user);
     e.preventDefault();
-    const {showUshowUserDetails} = this.state;
-    console.log(showUshowUserDetails);
-    this.setState({ showUshowUserDetails: !showUshowUserDetails});
+    
+    const {activeUserDetails} = this.state;
+    // console.log(activeUserDetails);
+    if (!activeUserDetails[id] || (activeUserDetails[id] === false)) {
+      this.setState({ activeUserDetails: {...activeUserDetails, [id]:true}});
+    } else {
+      this.setState({ activeUserDetails: {...activeUserDetails, [id]:false}});
+    } 
   }
 
   renderData = () => {
