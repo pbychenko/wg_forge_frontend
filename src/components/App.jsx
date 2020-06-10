@@ -4,6 +4,7 @@ import orders from '../../data/orders.json';
 import users from '../../data/users.json';
 import companies from '../../data/companies.json';
 import UserDetailsModal from './UserDetailsModal.jsx';
+import Statistics from './Statistics.jsx';
 
 
 const getOrderDate = (date) => {
@@ -34,7 +35,9 @@ export default class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      // items: [],
+      orders: orders,
+      companies: companies,
+      users: users,
       // activeUserData: null,
       // requestState: '',
       activeUserDetails: {},
@@ -47,6 +50,7 @@ export default class App extends React.Component {
   } 
 
   renderRow = (order) => {
+    const { users, companies} = this.state;
     const userData = users.filter(user => user.id === order.user_id)[0];
     const company = companies.filter(company => company.id === userData.company_id)[0];
     if (company) {
@@ -87,7 +91,41 @@ export default class App extends React.Component {
   }
 
   renderData = () => {
+    const { orders } = this.state;
     return orders.map(order => this.renderRow(order));
+  }
+
+  renderStatistics = () => {
+    const { orders, users } = this.state;
+    const males = users.filter(user => user.gender === 'Male').map(user => user.id);
+    const females = users.filter(user => user.gender === 'Female').map(user => user.id);;
+    const sumReducer = (acc, value) => acc + value;
+    console.log(males);
+    // console.log(females);
+    const statistics = {};
+    statistics.count = orders.length;
+    const maleOrders = orders.filter(order => males.includes(order.user_id));
+    const femaleOrders = orders.filter(order => females.includes(order.user_id));
+
+    console.log(maleOrders.length);
+    console.log(femaleOrders.length);
+    
+    
+    const orderSums = orders.map(order => +order.total);
+    const maleOrderSums = maleOrders.map(order => +order.total);
+    const femaleOrderSums = femaleOrders.map(order => +order.total);
+    statistics.total = orderSums.reduce(sumReducer, 0);
+    statistics.maleTotal = maleOrderSums.reduce(sumReducer, 0);
+    statistics.femaleTotal = femaleOrderSums.reduce(sumReducer, 0);
+    statistics.median = Math.pow(3,2);
+    statistics.average = statistics.total / statistics.count;
+    statistics.maleAverage = statistics.mailTotal / maleOrders.length;
+    statistics.femaleAverage = statistics.femailTotal / femaleOrders.length;
+    // 
+    // orderSums = [1,2,3];
+    // console.log(orderSums);
+    
+    return <Statistics data={statistics} />;
   }  
 
   render() {
@@ -107,6 +145,7 @@ export default class App extends React.Component {
           </thead>
           <tbody>
               {this.renderData()}
+              {this.renderStatistics()}
           </tbody>
         </Table>
     </>

@@ -1,5 +1,4 @@
 import React from 'react';
-// import companies from '../../data/companies.json';
 const getBirthdayDate = (date) => {
   const formatNumber = (number) => number < 10 ? '0' + number : number;
   const newDate = new Date(date);
@@ -16,8 +15,6 @@ export default class UserDetails extends React.Component {
       show,
       data,
     } = this.props;
-    // const company = companies.filter(company => company.id === data.company_id)[0];
-    // console.log(data);
     return (
       <div className="user-details" hidden={!show}>
         <p>Birthday: {getBirthdayDate(+data.birthday)}</p>
