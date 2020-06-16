@@ -5,24 +5,8 @@ import users from '../../data/users.json';
 import companies from '../../data/companies.json';
 import UserDetailsModal from './UserDetailsModal.jsx';
 import Statistics from './Statistics.jsx';
-
-
-const getOrderDate = (date) => {
-  const formatNumber = (number) => number < 10 ? '0' + number : number;
-  const newDate = new Date(date);
-  const day = formatNumber(newDate.getDate());
-  const month = formatNumber(newDate.getMonth() + 1);
-  const year =  formatNumber(newDate.getYear());
-  const hours = formatNumber(newDate.getHours());
-  const minutes = formatNumber(newDate.getMinutes());
-  const seconds = formatNumber(newDate.getSeconds());
-
-  return `${day}/${month}/${year} ${hours}/${minutes}/${seconds}`;
-}
-
-const formatCardNumber = (cardNumber) => {
-  return cardNumber.slice(0, 2) + '********' + cardNumber.slice(-4);
-}
+import { getOrderDate, formatCardNumber, getAverage, getMedian } from '../utils';
+import _ from 'lodash';
 
 const getUserName = (id) => {
   const user = users.filter(user => user.id === id)[0];
@@ -97,33 +81,31 @@ export default class App extends React.Component {
 
   renderStatistics = () => {
     const { orders, users } = this.state;
-    const males = users.filter(user => user.gender === 'Male').map(user => user.id);
-    const females = users.filter(user => user.gender === 'Female').map(user => user.id);;
-    const sumReducer = (acc, value) => acc + value;
-    console.log(males);
-    // console.log(females);
-    const statistics = {};
-    statistics.count = orders.length;
-    const maleOrders = orders.filter(order => males.includes(order.user_id));
-    const femaleOrders = orders.filter(order => females.includes(order.user_id));
-
-    console.log(maleOrders.length);
-    console.log(femaleOrders.length);
+    const malesIds = users.filter(user => user.gender === 'Male').map(user => user.id);
+    const femalesIds = users.filter(user => user.gender === 'Female').map(user => user.id);
+    // console.log(malesIds);
+    // console.log(femalesIds);
     
+    
+    const maleOrders = orders.filter(order => malesIds.includes(order.user_id));
+    const femaleOrders = orders.filter(order => femalesIds.includes(order.user_id));
+
+    // console.log(maleOrders.length);
+    // console.log(femaleOrders.length);    
     
     const orderSums = orders.map(order => +order.total);
     const maleOrderSums = maleOrders.map(order => +order.total);
     const femaleOrderSums = femaleOrders.map(order => +order.total);
-    statistics.total = orderSums.reduce(sumReducer, 0);
-    statistics.maleTotal = maleOrderSums.reduce(sumReducer, 0);
-    statistics.femaleTotal = femaleOrderSums.reduce(sumReducer, 0);
-    statistics.median = Math.pow(3,2);
-    statistics.average = statistics.total / statistics.count;
-    statistics.maleAverage = statistics.mailTotal / maleOrders.length;
-    statistics.femaleAverage = statistics.femailTotal / femaleOrders.length;
-    // 
-    // orderSums = [1,2,3];
-    // console.log(orderSums);
+    // console.log(maleOrderSums);
+    // console.log(femaleOrderSums.length);
+
+    const statistics = {};
+    statistics.count = orders.length;
+    statistics.total = _.sum(orderSums);
+    statistics.median = getMedian(orderSums);
+    statistics.average = getAverage(orderSums);
+    statistics.maleAverage = getAverage(maleOrderSums);
+    statistics.femaleAverage = getAverage(femaleOrderSums);
     
     return <Statistics data={statistics} />;
   }  
