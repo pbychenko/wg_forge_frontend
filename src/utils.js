@@ -53,9 +53,22 @@ export const getStatistics = (orders, users) => {
 };
 
 export const getFilteredOrdersByValue = (orders, value) => {
-  const filteredOrders = orders.filter(order => order.transaction_id.includes(value));
-  if (filteredOrders.length == 0) {
-    filteredOrders = orders.filter(order => order.total.includes(value));
-  }
+  const filteredOrders = orders.filter((order) => {
+    return (order.transaction_id.includes(value) || order.total.includes(value)
+     || order.card_type.includes(value) || order.order_country.includes(value) || order.order_ip.includes(value))
+  });
+  // console.log(filteredOrders);
   return filteredOrders;
 };
+
+export const getFilteredOrders = (orders, users, value) => {
+  const filteredUsers = users.filter(user => user.first_name.includes(value) || user.last_name.includes(value));
+  const filteredUsersIds = filteredUsers.map(user => user.id);
+  const filteredOrdersByName = orders.filter(order => filteredUsersIds.includes(order.user_id));
+  const filteredOrdersByValue = getFilteredOrdersByValue(orders, value);//.filter(order => filteredUsersIds.includes(order.user_id));
+  const filteredOrders = _.unionBy(filteredOrdersByName, filteredOrdersByValue, 'id');
+  // console.log(filteredOrders);
+  return filteredOrders;
+};
+
+// export const getFilteredOrders = 

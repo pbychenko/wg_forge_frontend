@@ -5,7 +5,7 @@ import users from '../../data/users.json';
 import companies from '../../data/companies.json';
 import UserDetailsModal from './UserDetailsModal.jsx';
 import Statistics from './Statistics.jsx';
-import { getOrderDate, formatCardNumber, getAverage, getMedian, getStatistics, getFilteredOrdersByValue } from '../utils';
+import { getOrderDate, formatCardNumber, getAverage, getMedian, getStatistics, getFilteredOrders, getFilteredOrdersByUserName } from '../utils';
 import _ from 'lodash';
 
 const getUserName = (id) => {
@@ -36,21 +36,9 @@ export default class App extends React.Component {
 
   handleChange = (e) => {
     const { value } = e.target;
-    // const stateOrders = this.state.orders;
-    // const stateUsers  = this.state.users;
-    // if (value !== '') {      
-    //   let filteredUsers = users.filter(user => user.first_name.includes(value));
-    //   let filteredUsersIds = filteredUsers.map(user => user.id);
-    //   // console.log(filteredUsersIds);
-    //   let filteredOrders = orders.filter(order => filteredUsersIds.includes(order.user_id)); 
-    //   // console.log(filteredUsers);
-    //   // console.log(filteredOrders);
-    //   this.setState({ searchValue: value, orders: filteredOrders, users: filteredUsers });
-    // } else {
-    //   this.setState({ searchValue: value, orders, users });
-    // }
     if (value !== '') {
-      const filteredOrders = getFilteredOrdersByValue(orders, value);
+      // const filteredOrders = getFilteredOrdersByValue(orders, value);
+      const filteredOrders = getFilteredOrders(orders, users, value);
       const filteredOrdersUserIds = filteredOrders.map(order => order.user_id);
       const filteredUsers = users.filter(user => filteredOrdersUserIds.includes(user.id));
       this.setState({ searchValue: value, orders: filteredOrders, users: filteredUsers });
@@ -103,7 +91,19 @@ export default class App extends React.Component {
 
   renderData = () => {
     const { orders } = this.state;
-    return orders.map(order => this.renderRow(order));
+    if (orders.length > 0) {
+      return (
+        <>
+          {orders.map(order => this.renderRow(order))}
+          {this.renderStatistics()}
+        </>
+      );
+    }
+    return (
+      <tr style={{textAlign: 'center'}}>
+          <td colSpan="7">Nothing found</td>
+      </tr>
+    );
   }
 
   renderStatistics = () => {
@@ -135,7 +135,7 @@ export default class App extends React.Component {
           </thead>
           <tbody>
               {this.renderData()}
-              {this.renderStatistics()}
+              {/* {this.renderStatistics()} */}
           </tbody>
         </Table>
     </>
