@@ -53,6 +53,7 @@ export const getStatistics = (orders, users) => {
 };
 
 export const getFilteredOrdersByValue = (orders, value) => {
+  // console.log(orders);
   const filteredOrders = orders.filter((order) => {
     return (order.transaction_id.includes(value) || order.total.includes(value)
      || order.card_type.includes(value) || order.order_country.includes(value) || order.order_ip.includes(value))
@@ -71,4 +72,108 @@ export const getFilteredOrders = (orders, users, value) => {
   return filteredOrders;
 };
 
+// export default orderDigitCompare = () => {
+
+// };
+
 // export const getFilteredOrders = 
+const getUserNameShort = (users, id) => {
+  const user = users.filter(user => user.id === id)[0];
+  // const genderPrefix = user.gender === 'Male' ? 'Mr.': 'Ms.';
+
+  return { first_name:user.first_name, last_name: user.last_name };
+}
+
+export const sortOrders = (sorting, orders, users) => {
+  // const { sorting, orders } = this.state;
+  
+  if (sorting.total) {
+    const correctOrders = orders.map(order => ({ ...order, 'total': +order.total, 'created_at': +order.created_at }));
+    const sorted = _.sortBy(correctOrders, 'total');
+    return sorted.map(order => ({ ...order, 'total': String(order.total), 'created_at': String(order.created_at) }));
+    // this.setState({ orders: result });
+  }
+
+  if (sorting.created_at) {
+    const correctOrders = orders.map(order => ({ ...order, 'total': +order.total, 'created_at': +order.created_at }));
+    const sorted = _.sortBy(correctOrders, 'created_at');
+    return sorted.map(order => ({ ...order, 'total': String(order.total), 'created_at': String(order.created_at) }));
+    // const result = sorted.map(order => ({ ...order, 'total': String(order.total), 'created_at': String(order.created_at) }));
+    // this.setState({ orders: result });
+  }
+
+  if (sorting.transaction_id) {
+    const sorted = _.sortBy(orders, 'transaction_id');
+    return sorted.map(order => ({ ...order, 'total': String(order.total), 'created_at': String(order.created_at) }));
+    // const result = sorted.map(order => ({ ...order, 'total': String(order.total), 'created_at': String(order.created_at) }));
+    // this.setState({ orders: sorted });
+  }
+
+  if (sorting.card_type) {
+    return _.sortBy(orders, 'card_type');
+    // const sorted = _.sortBy(orders, 'card_type');
+    // const result = sorted.map(order => ({ ...order, 'total': String(order.total), 'created_at': String(order.created_at) }));
+    // this.setState({ orders: sorted });
+  }
+
+  if (sorting.location) {
+    const locationCompare = (a, b) => {
+      if (a.order_country < b.order_country) {
+        return -1;
+      }
+      if (a.order_country > b.order_country) {
+        return 1;
+      }
+
+      if (a.order_ip < b.order_ip) {
+        return -1;
+      }
+      if (a.order_ip > b.order_ip) {
+        return 1;
+      }
+
+      return 0;
+    }
+
+
+    // const sorted = orders.sort(locationCompare);
+    return orders.sort(locationCompare);
+    // this.setState({ orders: sorted });
+  }
+
+  if (sorting.user) {
+    const userCompare = (a, b) => {
+      if (a.first_name < b.first_name) {
+        return -1;
+      }
+      if (a.first_name > b.first_name) {
+        return 1;
+      }
+
+      if (a.last_name < b.last_name) {
+        return -1;
+      }
+      if (a.last_name > b.last_name) {
+        return 1;
+      }
+
+      return 0;
+    }
+
+    const correctOrders = orders.map(order => {
+      const {first_name, last_name} = getUserNameShort(users, order.user_id);
+      return { ...order, first_name, last_name };
+    });
+
+    const sorted = correctOrders.sort(userCompare);
+    const result = sorted.map(order => {
+      delete order.first_name;
+      delete order.last_name;
+      return order;
+    });
+    return result;
+    // this.setState({ orders: result });
+  }
+  
+  return orders;
+}
