@@ -1,33 +1,28 @@
+/* eslint-disable dot-notation */
 import React from 'react';
-import { Table } from 'react-bootstrap';
-import orders from '../../data/orders.json';
-import users from '../../data/users.json';
-import companies from '../../data/companies.json';
+import { Table, Spinner, Alert } from 'react-bootstrap';
+import axios from 'axios';
 import UserDetailsModal from './UserDetailsModal.jsx';
 import Statistics from './Statistics.jsx';
-import { getOrderDate, formatCardNumber, getAverage, getMedian, getStatistics, getFilteredOrders, getFilteredOrdersByUserName, sortOrders } from '../utils';
-import _ from 'lodash';
+import {
+  getOrderDate, formatCardNumber, getStatistics, getUsersOfOrders,
+  getFilteredOrders, sortOrders, getFullUserName, getUserOfOrder,
+} from '../utils';
 
-const getUserName = (id) => {
-  const user = users.filter(user => user.id === id)[0];
-  const genderPrefix = user.gender === 'Male' ? 'Mr.': 'Ms.';
-
-  return `${genderPrefix} ${user.first_name} ${user.last_name}`;
-}
+const baseUrl = 'http://localhost:9000/api/';
 
 export default class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      orders: orders,
-      companies: companies,
-      users: users,
+      globalOrders: [],
+      globalUsers: [],
+      globalCompanies: [],
+      orders: [],
+      companies: [],
+      users: [],
       searchValue: '',
-      // globalOrders: orders,
-      // globalUsers: users,
-      // globalCompanies: companies,
-      // activeUserData: null,
-      // requestState: '',
+      requestState: '',
       activeUserDetails: {},
       sorting: {
         created_at: false,
@@ -35,55 +30,65 @@ export default class App extends React.Component {
         transaction_id: false,
         card_type: false,
         location: false,
-        user: false,
-      }
-      // showErrorBlock: false,
-      // form: {
-      //   name: '',
-      //   comment: '',
-      // },
+        user_name: false,
+      },
+      showErrorBlock: false,
     };
+  }
+
+  async componentDidMount() {
+    try {
+      this.setState({ requestState: 'processing' });
+      const ordersRes = await axios.get(`${baseUrl}/orders.json`);
+      const usersRes = await axios.get(`${baseUrl}/users.json`);
+      const companiesRes = await axios.get(`${baseUrl}/companies.json`);
+      this.setState({
+        requestState: 'success',
+        orders: ordersRes.data,
+        globalOrders: ordersRes.data,
+        users: usersRes.data,
+        globalUsers: usersRes.data,
+        companies: companiesRes.data,
+        globalCompanies: companiesRes.data,
+      });
+    } catch (error) {
+      this.setState({ requestState: 'failed', showErrorBlock: true });
+      throw error;
+    }
   }
 
   handleChange = (e) => {
     const { value } = e.target;
-    const {sorting} = this.state;
-    console.log(value);
+    const { globalOrders, globalUsers, sorting } = this.state;
 
-    // const {globalOrders, globalUsers} = this.state;
-    
     if (value !== '') {
-      const filteredOrders = getFilteredOrders(orders, users, value);
-      // const filteredOrders = getFilteredOrders(globalOrders, globalUsers, value);
-      const filteredOrdersUserIds = filteredOrders.map(order => order.user_id);
-      const filteredUsers = users.filter(user => filteredOrdersUserIds.includes(user.id));
+      const filteredOrders = getFilteredOrders(globalOrders, globalUsers, value);
+      const filteredUsers = getUsersOfOrders(filteredOrders, globalUsers);
       const sortedFilteredOrders = sortOrders(sorting, filteredOrders, filteredUsers);
       this.setState({ searchValue: value, orders: sortedFilteredOrders, users: filteredUsers });
-      // this.setState({ searchValue: value, orders: filteredOrders, users: filteredUsers });
     } else {
-      const sortedOrders = sortOrders(sorting, orders, users);
-      this.setState({ searchValue: value, orders: sortedOrders, users });      
+      const sortedOrders = sortOrders(sorting, globalOrders, globalUsers);
+      this.setState({ searchValue: value, orders: sortedOrders, users: globalUsers });
     }
-    // this.sortOrders();       
   }
 
   renderRow = (order) => {
-    const { users, companies} = this.state;
-    const userData = users.filter(user => user.id === order.user_id)[0];
-    const company = companies.filter(company => company.id === userData.company_id)[0];
-    if (company) {
-      userData['company_url'] = company.url;
-      userData['company_title'] = company.title;
-      userData['company_sector'] = company.sector;
-      userData['company_industry'] = company.industry;
+    const { users, companies } = this.state;
+    const user = getUserOfOrder(users, order);
+    const userCompany = companies.filter((company) => company.id === user.company_id)[0];
+    if (userCompany) {
+      user['company_url'] = userCompany.url;
+      user['company_title'] = userCompany.title;
+      user['company_sector'] = userCompany.sector;
+      user['company_industry'] = userCompany.industry;
     }
 
     return (
       <tr key={order.id} id={order.id}>
         <td>{order.transaction_id}</td>
         <td className="user_data">
-          <a href="#" onClick={this.handleUserDetailsClick(order.id)}>{getUserName(order.user_id)}</a>
-          <UserDetailsModal show={this.state.activeUserDetails[order.id]} data={userData} />
+          <a href="#" onClick={this.handleUserDetailsClick(order.id)}>{getFullUserName(user)}</a>
+          <UserDetailsModal show={this.state.activeUserDetails[order.id]} data={user} />
         </td>
         <td>{getOrderDate(+order.created_at)}</td>
         <td>${order.total}</td>
@@ -91,21 +96,18 @@ export default class App extends React.Component {
         <td>{order.card_type}</td>
         <td>{order.order_country} ({order.order_ip})</td>
       </tr>
-    );    
+    );
   }
 
   handleUserDetailsClick = (id) => (e) => {
-    // const user = users.filter(user => user.id === id)[0];
-    // console.log(user);
     e.preventDefault();
-    
-    const {activeUserDetails} = this.state;
-    // console.log(activeUserDetails);
+    const { activeUserDetails } = this.state;
+
     if (!activeUserDetails[id] || (activeUserDetails[id] === false)) {
-      this.setState({ activeUserDetails: {...activeUserDetails, [id]:true}});
+      this.setState({ activeUserDetails: { ...activeUserDetails, [id]: true } });
     } else {
-      this.setState({ activeUserDetails: {...activeUserDetails, [id]:false}});
-    } 
+      this.setState({ activeUserDetails: { ...activeUserDetails, [id]: false } });
+    }
   }
 
   renderData = () => {
@@ -113,13 +115,13 @@ export default class App extends React.Component {
     if (orders.length > 0) {
       return (
         <>
-          {orders.map(order => this.renderRow(order))}
+          {orders.map((order) => this.renderRow(order))}
           {this.renderStatistics()}
         </>
       );
     }
     return (
-      <tr style={{textAlign: 'center'}}>
+      <tr style={{ textAlign: 'center' }}>
           <td colSpan="7">Nothing found</td>
       </tr>
     );
@@ -128,7 +130,7 @@ export default class App extends React.Component {
   renderStatistics = () => {
     const { orders, users } = this.state;
     const statistics = getStatistics(orders, users);
-    
+
     return <Statistics data={statistics} />;
   }
 
@@ -138,14 +140,14 @@ export default class App extends React.Component {
       'Order Date': 'created_at',
       'Transaction ID': 'transaction_id',
       'Card Type': 'card_type',
-      'Location' : 'location',
-      'User Info': 'user',
+      Location: 'location',
+      'User Info': 'user_name',
     };
     const { sorting, orders, users } = this.state;
     const columnName = e.target.id;
+
     if (columnName !== 'Card Number') {
       Object.keys(sorting).forEach((key) => {
-        // console.log(key);
         sorting[key] = (key === map[columnName]) ? !sorting[key] : false;
       });
       const sorted = sortOrders(sorting, orders, users);
@@ -154,44 +156,55 @@ export default class App extends React.Component {
   }
 
   render() {
-    const { searchValue, sorting } = this.state;
-    const map = {
-      'Order Amount': 'total',
-      'Order Date': 'created_at',
-      'Transaction ID': 'transaction_id',
-      'Card Type': 'card_type',
-      'Location' : 'location',
-      'User Info': 'user',
+    const { searchValue, sorting, requestState } = this.state;
+    const getStortRow = (condition) => (condition ? (<span>&#8595;</span>) : '');
+    const centerStyle = {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh',
     };
-    const getStortRow = condition => condition ? (<span>&#8595;</span>) : '';
-    // const row = () => (<span>&#8595;</span>);
-    // console.log(row(sorting.transaction_id));
-    console.log(sorting);
+    const spinnerSizeStyle = {
+      width: '13rem',
+      height: '13rem',
+    };
 
+    if (requestState === 'processing') {
+      return (<div className="text-center" style = {centerStyle}><Spinner animation="border" style={spinnerSizeStyle} /></div>);
+    }
+
+    if (requestState === 'success') {
+      return (
+        <>
+          <Table responsive bordered>
+            <thead>
+            <tr>
+              <th>Search:</th>
+              <th colSpan="6"><input type="text" id="search" value={searchValue} onChange={this.handleChange}/></th>
+            </tr>
+              <tr onClick={this.handleSort}>
+                <th style={{ cursor: 'pointer' }} id='Transaction ID'>Transaction ID {getStortRow(sorting.transaction_id)}</th>
+                <th style={{ cursor: 'pointer' } } id='User Info'>User Info {getStortRow(sorting.user_name)}</th>
+                <th style={{ cursor: 'pointer' }} id='Order Date'>Order Date {getStortRow(sorting.created_at)}</th>
+                <th style={{ cursor: 'pointer' }} id='Order Amount'>Order Amount {getStortRow(sorting.total)}</th>
+                <th>Card Number</th>
+                <th style={{ cursor: 'pointer' }} id='Card Type'>Card Type {getStortRow(sorting.card_type)}</th>
+                <th style={{ cursor: 'pointer' }} id='Location'>Location {getStortRow(sorting.location)}</th>
+              </tr>
+            </thead>
+            <tbody>
+                {this.renderData()}
+            </tbody>
+          </Table>
+      </>
+      );
+    }
     return (
       <>
-        <Table responsive bordered>
-          <thead>
-          <tr>
-            <th>Search:</th>
-            <th colSpan="6"><input type="text" id="search" value={searchValue} onChange={this.handleChange}/></th>
-          </tr>
-            <tr onClick={this.handleSort}>
-              <th style={{cursor: "pointer"}} id='Transaction ID'>Transaction ID {getStortRow(sorting.transaction_id)}</th>
-              <th style={{cursor: "pointer"}} id='User Info'>User Info {getStortRow(sorting.user)}</th>
-              <th style={{cursor: "pointer"}} id='Order Date'>Order Date {getStortRow(sorting.created_at)}</th>
-              <th style={{cursor: "pointer"}} id='Order Amount'>Order Amount {getStortRow(sorting.total)}</th>
-              <th>Card Number</th>
-              <th style={{cursor: "pointer"}} id='Card Type'>Card Type {getStortRow(sorting.card_type)}</th>
-              <th style={{cursor: "pointer"}} id='Location'>Location {getStortRow(sorting.location)}</th>
-            </tr>
-          </thead>
-          <tbody>
-              {this.renderData()}
-              {/* {this.renderStatistics()} */}
-          </tbody>
-        </Table>
-    </>
-    );;
+        <Alert variant='info' className="text-center">
+          Something wrong with newtwork please try later
+        </Alert>
+      </>
+    );
   }
 }
