@@ -1,5 +1,4 @@
 // this is an example of improting data from JSON
-// import orders from '../data/orders.json';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import ReactDOM from 'react-dom';
 import React from 'react';

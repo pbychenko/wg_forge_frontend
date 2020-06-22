@@ -2,11 +2,11 @@
 import React from 'react';
 import { Table, Spinner, Alert } from 'react-bootstrap';
 import axios from 'axios';
-import UserDetailsModal from './UserDetailsModal.jsx';
 import Statistics from './Statistics.jsx';
+import Order from './Order.jsx';
 import {
-  getOrderDate, formatCardNumber, getStatistics, getUsersOfOrders,
-  getFilteredOrders, sortOrders, getFullUserName, getUserOfOrder,
+  getStatistics, getUsersOfOrders,
+  getFilteredOrders, sortOrders, getUserOfOrder,
 } from '../utils';
 
 const baseUrl = 'http://localhost:9000/api/';
@@ -82,20 +82,10 @@ export default class App extends React.Component {
       user['company_sector'] = userCompany.sector;
       user['company_industry'] = userCompany.industry;
     }
+    const userData = { order, user, activeUserDetails: this.state.activeUserDetails[order.id] };
 
     return (
-      <tr key={order.id} id={order.id}>
-        <td>{order.transaction_id}</td>
-        <td className="user_data">
-          <a href="#" onClick={this.handleUserDetailsClick(order.id)}>{getFullUserName(user)}</a>
-          <UserDetailsModal show={this.state.activeUserDetails[order.id]} data={user} />
-        </td>
-        <td>{getOrderDate(+order.created_at)}</td>
-        <td>${order.total}</td>
-        <td>{formatCardNumber(order.card_number)}</td>
-        <td>{order.card_type}</td>
-        <td>{order.order_country} ({order.order_ip})</td>
-      </tr>
+      <Order key={order.id} data={userData} onUserClick={this.handleUserDetailsClick(order.id)}/>
     );
   }
 
@@ -157,20 +147,24 @@ export default class App extends React.Component {
 
   render() {
     const { searchValue, sorting, requestState } = this.state;
-    const getStortRow = (condition) => (condition ? (<span>&#8595;</span>) : '');
-    const centerStyle = {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-    };
-    const spinnerSizeStyle = {
-      width: '13rem',
-      height: '13rem',
-    };
+    const getSortRow = (condition) => (condition ? (<span>&#8595;</span>) : '');
 
     if (requestState === 'processing') {
-      return (<div className="text-center" style = {centerStyle}><Spinner animation="border" style={spinnerSizeStyle} /></div>);
+      const centerStyle = {
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+      };
+      const spinnerSizeStyle = {
+        width: '13rem',
+        height: '13rem',
+      };
+      return (
+        <div className="text-center" style = {centerStyle}>
+          <Spinner animation="border" style={spinnerSizeStyle} />
+        </div>
+      );
     }
 
     if (requestState === 'success') {
@@ -183,13 +177,13 @@ export default class App extends React.Component {
               <th colSpan="6"><input type="text" id="search" value={searchValue} onChange={this.handleChange}/></th>
             </tr>
               <tr onClick={this.handleSort}>
-                <th style={{ cursor: 'pointer' }} id='Transaction ID'>Transaction ID {getStortRow(sorting.transaction_id)}</th>
-                <th style={{ cursor: 'pointer' } } id='User Info'>User Info {getStortRow(sorting.user_name)}</th>
-                <th style={{ cursor: 'pointer' }} id='Order Date'>Order Date {getStortRow(sorting.created_at)}</th>
-                <th style={{ cursor: 'pointer' }} id='Order Amount'>Order Amount {getStortRow(sorting.total)}</th>
+                <th style={{ cursor: 'pointer' }} id='Transaction ID'>Transaction ID {getSortRow(sorting.transaction_id)}</th>
+                <th style={{ cursor: 'pointer' } } id='User Info'>User Info {getSortRow(sorting.user_name)}</th>
+                <th style={{ cursor: 'pointer' }} id='Order Date'>Order Date {getSortRow(sorting.created_at)}</th>
+                <th style={{ cursor: 'pointer' }} id='Order Amount'>Order Amount {getSortRow(sorting.total)}</th>
                 <th>Card Number</th>
-                <th style={{ cursor: 'pointer' }} id='Card Type'>Card Type {getStortRow(sorting.card_type)}</th>
-                <th style={{ cursor: 'pointer' }} id='Location'>Location {getStortRow(sorting.location)}</th>
+                <th style={{ cursor: 'pointer' }} id='Card Type'>Card Type {getSortRow(sorting.card_type)}</th>
+                <th style={{ cursor: 'pointer' }} id='Location'>Location {getSortRow(sorting.location)}</th>
               </tr>
             </thead>
             <tbody>
@@ -202,7 +196,7 @@ export default class App extends React.Component {
     return (
       <>
         <Alert variant='info' className="text-center">
-          Something wrong with newtwork please try later
+          Something wrong with newtwork please try again later
         </Alert>
       </>
     );

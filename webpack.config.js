@@ -1,40 +1,40 @@
-var express = require("express");
-var path = require("path");
-var HtmlWebpackPlugin = require("html-webpack-plugin");
+const express = require('express');
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  entry: "./src/app.js",
+  entry: './src/app.js',
   output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: "bundle.js"
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle.js',
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: "./src/index.html"
-    })
+      template: './src/index.html',
+    }),
   ],
   resolve: {
     extensions: ['.js', '.jsx'],
   },
   devServer: {
-    contentBase: path.join(__dirname, "dist"),
+    contentBase: path.join(__dirname, 'dist'),
     open: true,
     port: 9000,
-    before: function(app, server) {
-      app.use("/api", express.static(path.join(__dirname, "data")));
-    }
+    before: (app) => {
+      app.use('/api', express.static(path.join(__dirname, 'data')));
+    },
   },
   module: {
     rules: [
       {
-        test: /\.js$/, 
+        test: /\.js$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
         },
       },
       {
-        test: /\.jsx$/, 
+        test: /\.jsx$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
