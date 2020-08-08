@@ -97,30 +97,31 @@ export const getFilteredOrders = (orders, users, value) => {
   return filteredOrders;
 };
 
-const sortOrdersByDigitParam = (orders, param) => {
-  const ordersWithDigitParam = orders.map((order) => ({ ...order, [param]: +order[param] }));
-  const sortedWithDigitParam = _.sortBy(ordersWithDigitParam, param);
-  return sortedWithDigitParam.map((order) => ({ ...order, [param]: String(order[param]) }));
+const sortOrdersByDigitParam = (orders, param, direction) => {
+  if (direction === 'asc') {
+    return orders.sort(((a, b) => a[param] - b[param]));
+  }
+  return orders.sort(((a, b) => b[param] - a[param]));
 };
 
 export const getUserOfOrder = (users, order) => (
   users.filter((user) => user.id === order.user_id)[0]);
 
 export const sortOrders = (sorting, orders, users) => {
-  if (sorting.total) {
-    return sortOrdersByDigitParam(orders, 'total');
+  if (sorting.by === 'total') {
+    return sortOrdersByDigitParam(orders, 'total', sorting.direction);
   }
 
-  if (sorting.created_at) {
-    return sortOrdersByDigitParam(orders, 'created_at');
+  if (sorting.by === 'created_at') {
+    return sortOrdersByDigitParam(orders, 'created_at', sorting.direction);
   }
 
-  if (sorting.transaction_id) {
-    return _.sortBy(orders, 'transaction_id');
+  if (sorting.by === 'transaction_id') {
+    return _.orderBy(orders, 'transaction_id', sorting.direction);
   }
 
-  if (sorting.card_type) {
-    return _.sortBy(orders, 'card_type');
+  if (sorting.by === 'card_type') {
+    return _.orderBy(orders, 'card_type', sorting.direction);
   }
 
   if (sorting.location) {

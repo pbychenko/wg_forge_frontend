@@ -24,14 +24,15 @@ export default class App extends React.Component {
       searchValue: '',
       requestState: '',
       activeUserDetails: {},
-      sorting: {
-        created_at: false,
-        total: false,
-        transaction_id: false,
-        card_type: false,
-        location: false,
-        user_name: false,
-      },
+      // sorting: {
+      //   created_at: false,
+      //   total: false,
+      //   transaction_id: false,
+      //   card_type: false,
+      //   location: false,
+      //   user_name: false,
+      // },
+      sorting: { by: '', direction: 'asc' },
       showErrorBlock: false,
     };
   }
@@ -82,7 +83,7 @@ export default class App extends React.Component {
       user['company_sector'] = userCompany.sector;
       user['company_industry'] = userCompany.industry;
     }
-    const userData = { order, user, activeUserDetails: this.state.activeUserDetails[order.id] };
+    const userData = { order, user, showUserDetails: this.state.activeUserDetails[order.id] };
 
     return (
       <Order key={order.id} data={userData} onUserClick={this.handleUserDetailsClick(order.id)}/>
@@ -101,12 +102,14 @@ export default class App extends React.Component {
   }
 
   renderData = () => {
-    const { orders } = this.state;
+    const { orders, users } = this.state;
+    const statistics = getStatistics(orders, users);
+
     if (orders.length > 0) {
       return (
         <>
           {orders.map((order) => this.renderRow(order))}
-          {this.renderStatistics()}
+          <Statistics data={statistics} />
         </>
       );
     }
@@ -115,13 +118,6 @@ export default class App extends React.Component {
           <td colSpan="7">Nothing found</td>
       </tr>
     );
-  }
-
-  renderStatistics = () => {
-    const { orders, users } = this.state;
-    const statistics = getStatistics(orders, users);
-
-    return <Statistics data={statistics} />;
   }
 
   handleSort = (e) => {
@@ -136,10 +132,23 @@ export default class App extends React.Component {
     const { sorting, orders, users } = this.state;
     const columnName = e.target.id;
 
+    // if (columnName !== 'Card Number') {
+    //   Object.keys(sorting).forEach((key) => {
+    //     sorting[key] = (key === map[columnName]) ? !sorting[key] : false;
+    //   });
+    //   const sorted = sortOrders(sorting, orders, users);
+    //   this.setState({ sorting, orders: sorted });
+    // }
+
     if (columnName !== 'Card Number') {
-      Object.keys(sorting).forEach((key) => {
-        sorting[key] = (key === map[columnName]) ? !sorting[key] : false;
-      });
+      if (sorting.by === map[columnName]) {
+        sorting.direction = sorting.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        sorting.by = map[columnName];
+      }
+      // Object.keys(sorting).forEach((key) => {
+      //   sorting[key] = (key === map[columnName]) ? !sorting[key] : false;
+      // });
       const sorted = sortOrders(sorting, orders, users);
       this.setState({ sorting, orders: sorted });
     }
