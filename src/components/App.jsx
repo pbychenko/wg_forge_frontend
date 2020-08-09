@@ -24,38 +24,31 @@ export default class App extends React.Component {
       searchValue: '',
       requestState: '',
       activeUserDetails: {},
-      // sorting: {
-      //   created_at: false,
-      //   total: false,
-      //   transaction_id: false,
-      //   card_type: false,
-      //   location: false,
-      //   user_name: false,
-      // },
       sorting: { by: '', direction: 'asc' },
       showErrorBlock: false,
     };
   }
 
-  async componentDidMount() {
-    try {
-      this.setState({ requestState: 'processing' });
-      const ordersRes = await axios.get(`${baseUrl}/orders.json`);
-      const usersRes = await axios.get(`${baseUrl}/users.json`);
-      const companiesRes = await axios.get(`${baseUrl}/companies.json`);
-      this.setState({
-        requestState: 'success',
-        orders: ordersRes.data,
-        globalOrders: ordersRes.data,
-        users: usersRes.data,
-        globalUsers: usersRes.data,
-        companies: companiesRes.data,
-        globalCompanies: companiesRes.data,
-      });
-    } catch (error) {
-      this.setState({ requestState: 'failed', showErrorBlock: true });
-      throw error;
-    }
+  componentDidMount() {
+    this.setState({ requestState: 'processing' }, async () => {
+      try {
+        const ordersRes = await axios.get(`${baseUrl}/orders.json`);
+        const usersRes = await axios.get(`${baseUrl}/users.json`);
+        const companiesRes = await axios.get(`${baseUrl}/companies.json`);
+        this.setState({
+          requestState: 'success',
+          orders: ordersRes.data,
+          globalOrders: ordersRes.data,
+          users: usersRes.data,
+          globalUsers: usersRes.data,
+          companies: companiesRes.data,
+          globalCompanies: companiesRes.data,
+        });
+      } catch (error) {
+        this.setState({ requestState: 'failed', showErrorBlock: true });
+        throw error;
+      }
+    });
   }
 
   handleChange = (e) => {
@@ -132,23 +125,13 @@ export default class App extends React.Component {
     const { sorting, orders, users } = this.state;
     const columnName = e.target.id;
 
-    // if (columnName !== 'Card Number') {
-    //   Object.keys(sorting).forEach((key) => {
-    //     sorting[key] = (key === map[columnName]) ? !sorting[key] : false;
-    //   });
-    //   const sorted = sortOrders(sorting, orders, users);
-    //   this.setState({ sorting, orders: sorted });
-    // }
-
     if (columnName !== 'Card Number') {
       if (sorting.by === map[columnName]) {
         sorting.direction = sorting.direction === 'asc' ? 'desc' : 'asc';
       } else {
         sorting.by = map[columnName];
       }
-      // Object.keys(sorting).forEach((key) => {
-      //   sorting[key] = (key === map[columnName]) ? !sorting[key] : false;
-      // });
+
       const sorted = sortOrders(sorting, orders, users);
       this.setState({ sorting, orders: sorted });
     }
@@ -157,6 +140,7 @@ export default class App extends React.Component {
   render() {
     const { searchValue, sorting, requestState } = this.state;
     const getSortRow = (condition) => (condition ? (<span>&#8595;</span>) : '');
+    console.log(this.state.requestState);
 
     if (requestState === 'processing') {
       const centerStyle = {

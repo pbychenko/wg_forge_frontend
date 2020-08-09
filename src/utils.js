@@ -1,6 +1,5 @@
 /* eslint-disable no-param-reassign */
 import _ from 'lodash';
-import { locationCompare, nameCompare } from './comparators';
 
 const getAverage = (arr) => _.sum(arr) / arr.length;
 
@@ -16,24 +15,27 @@ const getMedian = (arr) => {
   return (sorted[middle - 1] + sorted[middle]) / 2;
 };
 
-const formatNumber = (number) => ((number < 10) ? (`0${number}`) : number);
+const formatNumber = (number) => (number < 10 ? `0${number}` : `${number}`);
 
-export const getFullUserName = (userData) => {
-  const genderPrefix = userData.gender === 'Male' ? 'Mr.' : 'Ms.';
-
-  return `${genderPrefix} ${userData.first_name} ${userData.last_name}`;
-};
-
-export const getOrderDate = (date) => {
+const getTimeStamp = (date) => {
   const newDate = new Date(date);
-  const day = formatNumber(newDate.getDate());
-  const month = formatNumber(newDate.getMonth() + 1);
-  const year = formatNumber(newDate.getYear());
   const hours = formatNumber(newDate.getHours());
   const minutes = formatNumber(newDate.getMinutes());
   const seconds = formatNumber(newDate.getSeconds());
 
-  return `${day}/${month}/${year} ${hours}/${minutes}/${seconds}`;
+  return `${hours}/${minutes}/${seconds}`;
+};
+
+const getOrdersOfUsers = (users, orders) => {
+  const ordersOfUsers = orders.filter((order) => users.some(({ id }) => id === order.user_id));
+
+  return ordersOfUsers;
+};
+
+export const getFullUserName = ({ gender, first_name, last_name }) => {
+  const genderPrefix = gender === 'Male' ? 'Mr.' : 'Ms.';
+
+  return `${genderPrefix} ${first_name} ${last_name}`;
 };
 
 export const getBirthdayDate = (date) => {
@@ -45,18 +47,12 @@ export const getBirthdayDate = (date) => {
   return `${day}/${month}/${year}`;
 };
 
+export const getOrderDate = (date) => `${getBirthdayDate(date)} ${getTimeStamp(date)}`;
+
 export const formatCardNumber = (cardNumber) => `${cardNumber.slice(0, 2)}********${cardNumber.slice(-4)}`;
 
-const getOrdersOfUsers = (users, orders) => {
-  const usersIds = users.map((user) => user.id);
-  const ordersOfUsers = orders.filter((order) => usersIds.includes(order.user_id));
-
-  return ordersOfUsers;
-};
-
 export const getUsersOfOrders = (orders, users) => {
-  const ordersUsersIds = orders.map((order) => order.user_id);
-  const usersOfOrders = users.filter((user) => ordersUsersIds.includes(user.id));
+  const usersOfOrders = users.filter((user) => orders.some((order) => order.user_id === user.id));
 
   return usersOfOrders;
 };
@@ -70,13 +66,14 @@ export const getStatistics = (orders, users) => {
   const maleOrdersSums = maleOrders.map((order) => +order.total);
   const femaleOrdersSums = femaleOrders.map((order) => +order.total);
 
-  const statistics = {};
-  statistics.count = orders.length;
-  statistics.total = _.sum(ordersSums);
-  statistics.median = getMedian(ordersSums);
-  statistics.average = getAverage(ordersSums);
-  statistics.maleAverage = getAverage(maleOrdersSums);
-  statistics.femaleAverage = getAverage(femaleOrdersSums);
+  const statistics = {
+    count: orders.length,
+    total: _.sum(ordersSums),
+    median: getMedian(ordersSums),
+    average: getAverage(ordersSums),
+    maleAverage: getAverage(maleOrdersSums),
+    femaleAverage: getAverage(femaleOrdersSums),
+  };
 
   return statistics;
 };
@@ -108,34 +105,26 @@ export const getUserOfOrder = (users, order) => (
   users.filter((user) => user.id === order.user_id)[0]);
 
 export const sortOrders = (sorting, orders, users) => {
-  if (sorting.by === 'total') {
-    return sortOrdersByDigitParam(orders, 'total', sorting.direction);
+  if (sorting.by === 'total' || sorting.by === 'created_at') {
+    return sortOrdersByDigitParam(orders, sorting.by, sorting.direction);
   }
 
-  if (sorting.by === 'created_at') {
-    return sortOrdersByDigitParam(orders, 'created_at', sorting.direction);
+  if (sorting.by === 'transaction_id' || sorting.by === 'card_type') {
+    return _.orderBy(orders, sorting.by, sorting.direction);
   }
 
-  if (sorting.by === 'transaction_id') {
-    return _.orderBy(orders, 'transaction_id', sorting.direction);
+  if (sorting.by === 'location') {
+    return _.orderBy(orders, ['order_country', 'order_ip'], [sorting.direction, sorting.direction]);
   }
 
-  if (sorting.by === 'card_type') {
-    return _.orderBy(orders, 'card_type', sorting.direction);
-  }
-
-  if (sorting.location) {
-    return orders.sort(locationCompare);
-  }
-
-  if (sorting.user_name) {
+  if (sorting.by === 'user_name') {
     const ordersWithUserNames = orders.map((order) => {
       // eslint-disable-next-line camelcase
       const { first_name, last_name } = getUserOfOrder(users, order);
       return { ...order, first_name, last_name };
     });
 
-    const sorted = ordersWithUserNames.sort(nameCompare);
+    const sorted = _.orderBy(ordersWithUserNames, ['first_name', 'last_name'], [sorting.direction, sorting.direction]);
     const result = sorted.map((order) => {
       delete order.first_name;
       delete order.last_name;
