@@ -57,11 +57,18 @@ export const getUsersOfOrders = (orders, users) => {
   return usersOfOrders;
 };
 
+export const getUserOfOrder = (users, order) => (
+  users.filter((user) => user.id === order.user_id)[0]);
+
 export const getStatistics = (orders, users) => {
-  const males = users.filter((user) => user.gender === 'Male');
-  const females = users.filter((user) => user.gender === 'Female');
-  const maleOrders = getOrdersOfUsers(males, orders);
-  const femaleOrders = getOrdersOfUsers(females, orders);
+  const ordersWithGender = orders.map((order) => {
+    const { gender } = getUserOfOrder(users, order);
+    return { ...order, gender };
+  });
+
+  const maleOrders = ordersWithGender.filter((order) => order.gender === 'Male');
+  const femaleOrders = ordersWithGender.filter((order) => order.gender === 'Female');
+
   const ordersSums = orders.map((order) => +order.total);
   const maleOrdersSums = maleOrders.map((order) => +order.total);
   const femaleOrdersSums = femaleOrders.map((order) => +order.total);
@@ -86,8 +93,9 @@ const getFilteredOrdersByValue = (orders, value) => {
 };
 
 export const getFilteredOrders = (orders, users, value) => {
-  const filteredUsers = users.filter((user) => user.first_name.includes(value)
-   || user.last_name.includes(value));
+  const lowCaseValue = value.toLowerCase();
+  const filteredUsers = users.filter((user) => user.first_name.toLowerCase().includes(lowCaseValue)
+   || user.last_name.toLowerCase().includes(lowCaseValue));
   const filteredOrdersByName = getOrdersOfUsers(filteredUsers, orders);
   const filteredOrdersByValue = getFilteredOrdersByValue(orders, value);
   const filteredOrders = _.unionBy(filteredOrdersByName, filteredOrdersByValue, 'id');
@@ -100,9 +108,6 @@ const sortOrdersByDigitParam = (orders, param, direction) => {
   }
   return orders.sort(((a, b) => b[param] - a[param]));
 };
-
-export const getUserOfOrder = (users, order) => (
-  users.filter((user) => user.id === order.user_id)[0]);
 
 export const sortOrders = (sorting, orders, users) => {
   if (sorting.by === 'total' || sorting.by === 'created_at') {

@@ -10,6 +10,16 @@ import {
 } from '../utils';
 
 const baseUrl = 'http://localhost:9000/api/';
+const centerStyle = {
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  minHeight: '100vh',
+};
+const spinnerSizeStyle = {
+  width: '13rem',
+  height: '13rem',
+};
 
 export default class App extends React.Component {
   constructor(props) {
@@ -140,19 +150,8 @@ export default class App extends React.Component {
   render() {
     const { searchValue, sorting, requestState } = this.state;
     const getSortRow = (condition) => (condition ? (<span>&#8595;</span>) : '');
-    console.log(this.state.requestState);
 
     if (requestState === 'processing') {
-      const centerStyle = {
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-      };
-      const spinnerSizeStyle = {
-        width: '13rem',
-        height: '13rem',
-      };
       return (
         <div className="text-center" style = {centerStyle}>
           <Spinner animation="border" style={spinnerSizeStyle} />
