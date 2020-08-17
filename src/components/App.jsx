@@ -47,12 +47,12 @@ export default class App extends React.Component {
         const companiesRes = await axios.get(`${baseUrl}/companies.json`);
         this.setState({
           requestState: 'success',
-          orders: ordersRes.data,
           globalOrders: ordersRes.data,
-          users: usersRes.data,
-          globalUsers: usersRes.data,
-          companies: companiesRes.data,
           globalCompanies: companiesRes.data,
+          globalUsers: usersRes.data,
+          orders: ordersRes.data,
+          users: usersRes.data,
+          companies: companiesRes.data,
         });
       } catch (error) {
         this.setState({ requestState: 'failed', showErrorBlock: true });

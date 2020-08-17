@@ -66,8 +66,15 @@ export const getStatistics = (orders, users) => {
     return { ...order, gender };
   });
 
-  const maleOrders = ordersWithGender.filter((order) => order.gender === 'Male');
-  const femaleOrders = ordersWithGender.filter((order) => order.gender === 'Female');
+  const maleOrders = [];
+  const femaleOrders = [];
+  const map = {
+    Male: (order) => maleOrders.push(order),
+    Female: (order) => femaleOrders.push(order),
+  };
+  ordersWithGender.forEach((order) => {
+    map[order.gender](order);
+  });
 
   const ordersSums = orders.map((order) => +order.total);
   const maleOrdersSums = maleOrders.map((order) => +order.total);
